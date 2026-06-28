@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RPA Terminal Test Area</title>
+    <style>
+        /* Feature 3: Visual Alert Animation style test */
+        @keyframes alertFlash {
+            0% { background-color: rgba(255, 0, 0, 0.4); }
+            100% { background-color: transparent; }
+        }
+        .row-flash-alert {
+            animation: alertFlash 1.5s ease-out;
+            background-color: rgba(255, 0, 0, 0.15) !important;
+        }
+        body { background: #000; color: #fff; font-family: monospace; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <h2>RPA Data Feed Test Grid</h2>
+    <div id="grid-root"></div>
+
+    <script>
+        // Mock Data generator testing ke liye (Simulation setup)
+        function generateMockBatch() {
+            return [
+                { project_id: "PRJ001", company_id: "COMP-A", budget_usd: 500000, roi_percent: 12.5, employee_hours_saved: 1200, project_status: "Completed" },
+                { project_id: "PRJ002", company_id: "COMP-B", budget_usd: 750000, roi_percent: -2.4, employee_hours_saved: 450, project_status: "Failed" }, // Alert row
+                { project_id: "PRJ003", company_id: "COMP-C", budget_usd: 1200000, roi_percent: 45.823, employee_hours_saved: 5000, project_status: "Active" }
+            ];
+        }
+
+        // Test Renderer (Jo humne VirtualGrid logic me socha tha)
+        function renderTest(data) {
+            const root = document.getElementById('grid-root');
+            let tableHtml = `<table border="1" cellpadding="8" style="border-collapse:collapse; width:100%;">
+                <tr style="background:#222;">
+                    <th>Project ID</th><th>Company ID</th><th>Budget</th><th>ROI</th><th>Status</th>
+                </tr>`;
+            
+            data.forEach(row => {
+                // Feature 3 Warning Logic Check
+                const isAlert = row.project_status === 'Failed' || row.roi_percent < 0;
+                const rowClass = isAlert ? 'class="row-flash-alert"' : '';
+                
+                // Feature 2 Sanitation Test
+                const formattedBudget = Number(row.budget_usd).toLocaleString();
+                const formattedRoi = Number(row.roi_percent).toFixed(2);
+
+                tableHtml += `<tr ${rowClass}>
+                    <td>${row.project_id}</td>
+                    <td>${row.company_id}</td>
+                    <td>$${formattedBudget}</td>
+                    <td>${formattedRoi}%</td>
+                    <td>${row.project_status}</td>
+                </tr>`;
+            });
+            
+            tableHtml += `</table>`;
+            root.innerHTML = tableHtml;
+        }
+
+        // Run direct test
+        const testData = generateMockBatch();
+        renderTest(testData);
+    </script>
+</body>
+</html>

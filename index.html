@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise RPA Quantum Control Console</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --neon-blue: #00f0ff;
+            --neon-green: #39ff14;
+            --neon-red: #ff3131;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 15px;
+        }
+
+        h1 {
+            color: var(--neon-blue);
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        .workspace-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #475569;
+        }
+
+        .btn-pause { background: var(--neon-red); color: white; }
+        .btn-pause:hover { background: #cc2424; }
+        .btn-play { background: var(--neon-green); color: black; }
+        .btn-play:hover { background: #2ecc0b; }
+        .btn-action { background: #0284c7; }
+        .btn-action:hover { background: #0369a1; }
+
+        /* KPI Grid */
+        #kpi-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .card h3 {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--neon-blue);
+        }
+
+        /* 📊 CHART PANEL FIXES */
+        #chart-panel {
+            background: var(--panel-bg);
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 20px;
+            height: 350px !important; 
+            min-height: 320px !important;
+            margin-bottom: 25px !important;
+        }
+
+        /* 🏎️ VIRTUAL TABLE PANEL FIXES */
+        #grid-panel {
+            background: var(--panel-bg);
+            border: 1px solid #334155;
+            border-radius: 6px;
+            height: 550px !important; 
+            min-height: 450px !important;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        #grid-runway {
+            position: relative;
+            width: 100%;
+        }
+
+        #grid-table {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            border-collapse: collapse;
+            font-family: monospace;
+        }
+
+        #grid-table th {
+            background: #111827;
+            color: var(--text-muted);
+            text-align: left;
+            padding: 12px 10px !important;
+            font-size: 13px !important;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            border-bottom: 1px solid #334155;
+        }
+
+        th[style*="color"] {
+            background: rgba(0, 240, 255, 0.07) !important;
+            box-shadow: inset 0 -3px 0 var(--neon-blue);
+        }
+
+        #grid-table td {
+            padding: 12px 10px !important;
+            font-size: 13px !important;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        #grid-body tr:hover {
+            background: rgba(0, 240, 255, 0.04) !important;
+        }
+
+        .row-flash-alert {
+            background: rgba(255, 49, 49, 0.06) !important;
+            border-left: 4px solid var(--neon-red) !important;
+        }
+
+        /* Interactive Controls Area */
+        .controls-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            min-width: 250px;
+        }
+
+        .select-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-completed { background: rgba(57, 255, 20, 0.2); color: var(--neon-green); }
+        .status-failed { background: rgba(255, 49, 49, 0.2); color: var(--neon-red); }
+        .match-highlight { background: #b45309; color: white; padding: 0 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div>
+            <h1>RPA QUANTUM CONTROL CONSOLE</h1>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Core Architecture v5.0 // High-Density Dynamic Matrix</div>
+        </div>
+    </div>
+
+    <div class="workspace-controls">
+        <button id="toggle-kpi" class="btn">TOGGLE KPIS</button>
+        <button id="toggle-chart" class="btn">TOGGLE ANALYTICS</button>
+        <button id="toggle-grid" class="btn">TOGGLE GRID</button>
+    </div>
+
+    <div id="kpi-panel">
+        <div class="card">
+            <h3>Total Streamed Rows</h3>
+            <div id="kpi-rows" class="value">0</div>
+        </div>
+        <div class="card">
+            <h3>Active Robots Deployed</h3>
+            <div id="kpi-robots" class="value">0</div>
+        </div>
+        <div class="card">
+            <h3>Global Cumulative Savings</h3>
+            <div id="kpi-savings" class="value">$0</div>
+        </div>
+    </div>
+
+    <div class="controls-row">
+        <button id="btn-toggle" class="btn btn-pause">PAUSE ENGINE</button>
+        <button id="btn-export" class="btn btn-action">EXPORT CSV</button>
+        <button id="btn-json" class="btn btn-action">EXPORT JSON</button>
+        
+        <input type="text" id="search-input" class="search-box" placeholder="Fuzzy Global Multi-Field Search...">
+        
+        <select id="filter-type" class="select-box">
+            <option value="">All Automations</option>
+            <option value="Bot">Bot</option>
+            <option value="AI-Agent">AI-Agent</option>
+            <option value="Workflow">Workflow</option>
+        </select>
+
+        <select id="filter-dept" class="select-box">
+            <option value="">All Departments</option>
+            <option value="Finance">Finance</option>
+            <option value="Operations">Operations</option>
+            <option value="IT Support">IT Support</option>
+            <option value="HR">HR</option>
+            <option value="Legal">Legal</option>
+        </select>
+    </div>
+
+    <div id="chart-panel">
+        <div style="position: relative; height: 100%; width: 100%;">
+            <canvas id="myAnalyticsChart"></canvas>
+        </div>
+    </div>
+
+    <div id="grid-panel">
+        <div id="grid-runway">
+            <table id="grid-table">
+                <thead>
+                    <tr>
+                        <th id="th-project_id">Project ID ↕</th>
+                        <th id="th-company_id">Company ID ↕</th>
+                        <th id="th-automation_type">Type ↕</th>
+                        <th id="th-budget_usd">Budget ↕</th>
+                        <th id="th-roi_percent">ROI % ↕</th>
+                        <th id="th-employee_hours_saved">Hrs Saved ↕</th>
+                        <th id="th-project_status">Status ↕</th>
+                    </tr>
+                </thead>
+                <tbody id="grid-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 20px; padding: 12px; background: #0f172a; border-top: 1px solid #1e293b; font-family: monospace; font-size: 11px; margin-top: 15px;">
+        <div>📡 STREAM: <span id="status-overlay" style="color: var(--neon-green); font-weight: bold;">● ONLINE</span></div>
+        <div>📥 BUFFER WATCHDOG: <span id="sentinel-buffer-size" style="font-weight: bold;">0 (CLEAR)</span></div>
+        <div>⚡ DOM RENDER LAG: <span id="performance-lag" style="color: #38bdf8; font-weight: bold;">0.00ms</span></div>
+        <div style="margin-left: auto; color: #64748b;">QUANTUM CORE V2.6</div>
+    </div>
+
+    <script src="dataStream.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
